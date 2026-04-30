@@ -50,7 +50,7 @@ Results can be **copied to clipboard** or **exported to CSV**.
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/teenvul.git
-cd teenvul
+cd tenvul
 ```
 
 ### 2. Install dependencies
