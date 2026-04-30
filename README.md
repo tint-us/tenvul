@@ -52,7 +52,7 @@ Results can be **copied to clipboard** or **exported to CSV**.
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/teenvul.git
+git clone https://github.com/tint-us/tenvul.git
 cd tenvul
 ```
 
