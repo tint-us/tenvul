@@ -13,6 +13,9 @@ Enter one or more CVE IDs (e.g. `CVE-2025-54918`) and the tool will query your T
 Results can be **copied to clipboard** or **exported to CSV**.
 
 ---
+<img width="1110" height="327" alt="image" src="https://github.com/user-attachments/assets/83e57c64-e5fe-47cf-a7d5-9532b66c7e02" />
+
+---
 
 ## 📋 Features
 
