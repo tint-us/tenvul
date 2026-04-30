@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TenVul · CVE Host Lookup</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --blue: #2563eb;
+            --blue-dark: #1d4ed8;
+            --blue-light: #eff6ff;
+            --green: #16a34a;
+            --green-dark: #15803d;
+            --red: #dc2626;
+            --yellow-bg: #fffbeb;
+            --yellow-border: #fcd34d;
+            --yellow-text: #92400e;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-400: #9ca3af;
+            --gray-600: #4b5563;
+            --gray-900: #111827;
+            --radius: 8px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: var(--gray-100);
+            color: var(--gray-900);
+            min-height: 100vh;
+            padding: 24px 16px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: var(--blue);
+            padding: 24px 28px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .header-icon {
+            width: 42px;
+            height: 42px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .header-icon svg {
+            width: 22px;
+            height: 22px;
+            stroke: white;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .header-title-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 500;
+            color: white;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .header-badge {
+            font-size: 11px;
+            font-weight: 600;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 99px;
+            white-space: nowrap;
+        }
+
+        .header p {
+            font-size: 12px;
+            color: rgba(255,255,255,0.55);
+            margin-top: 3px;
+        }
+
+        /* Body */
+        .body {
+            padding: 28px;
+        }
+
+        /* Search area */
+        .search-card {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .search-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--gray-600);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 10px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        #cveInput {
+            flex-grow: 1;
+            padding: 11px 14px;
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius);
+            font-size: 15px;
+            font-family: 'JetBrains Mono', monospace;
+            background: white;
+            transition: border-color 0.15s;
+            color: var(--gray-900);
+        }
+
+        #cveInput::placeholder { color: var(--gray-400); font-size: 13px; }
+        #cveInput:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+
+        #queryBtn {
+            padding: 11px 22px;
+            background: var(--blue);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'DM Sans', sans-serif;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background 0.15s, opacity 0.15s;
+        }
+
+        #queryBtn:hover:not(:disabled) { background: var(--blue-dark); }
+        #queryBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .hint {
+            margin-top: 10px;
+            font-size: 12.5px;
+            color: var(--gray-400);
+            line-height: 1.5;
+        }
+
+        .hint code {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--gray-100);
+            border: 1px solid var(--gray-200);
+            padding: 1px 5px;
+            border-radius: 4px;
+            font-size: 11.5px;
+            color: var(--gray-600);
+        }
+
+        /* Status */
+        #status {
+            display: none;
+            padding: 12px 16px;
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 16px;
+            border: 1px solid transparent;
+        }
+
+        .status-loading { background: var(--yellow-bg); border-color: var(--yellow-border); color: var(--yellow-text); }
+        .status-error   { background: #fef2f2; border-color: #fecaca; color: var(--red); }
+        .status-success { background: #f0fdf4; border-color: #bbf7d0; color: var(--green); }
+
+        /* Results */
+        #resultContainer { display: none; }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .result-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gray-600);
+        }
+
+        .result-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        .export-btn {
+            padding: 8px 16px;
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius);
+            font-size: 13px;
+            font-weight: 600;
+            font-family: 'DM Sans', sans-serif;
+            background: white;
+            cursor: pointer;
+            transition: all 0.15s;
+            color: var(--gray-600);
+        }
+
+        .export-btn:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-light); }
+        .export-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .table-wrapper { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--gray-200); }
+
+        #resultsTable {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13.5px;
+        }
+
+        #resultsTable th {
+            background: var(--gray-50);
+            color: var(--gray-600);
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 11px 14px;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+            white-space: nowrap;
+        }
+
+        #resultsTable td {
+            padding: 11px 14px;
+            border-bottom: 1px solid var(--gray-100);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12.5px;
+            color: var(--gray-900);
+        }
+
+        #resultsTable tr:last-child td { border-bottom: none; }
+        #resultsTable tbody tr:hover { background: var(--blue-light); }
+
+        .badge {
+            display: inline-block;
+            background: var(--blue-light);
+            color: var(--blue);
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 99px;
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        /* No result */
+        #noResult {
+            display: none;
+            padding: 20px;
+            border: 1.5px dashed var(--gray-200);
+            border-radius: var(--radius);
+            text-align: center;
+            color: var(--gray-400);
+            font-size: 14px;
+        }
+
+        #noResult strong { display: block; margin-bottom: 4px; color: var(--gray-600); font-size: 15px; }
+
+        @media (max-width: 600px) {
+            .body { padding: 20px 16px; }
+            .input-row { flex-direction: column; }
+            #queryBtn { width: 100%; }
+            .result-actions { width: 100%; }
+            .export-btn { flex: 1; text-align: center; }
+        }
+
+        /* Footer */
+        .header p {
+            font-size: 14px;
+            color: rgba(255,255,255,0.7);
+            margin-top: 3px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 16px 28px;
+            border-top: 1px solid var(--gray-100);
+            font-size: 12.5px;
+            color: var(--gray-400);
+        }
+
+        .footer a {
+            color: var(--blue);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .footer a:hover { text-decoration: underline; }
+
+        /* Pagination */
+        .pagination-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 14px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .pagination-info {
+            font-size: 13px;
+            color: var(--gray-400);
+        }
+
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .page-btn {
+            padding: 6px 12px;
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius);
+            background: white;
+            font-size: 13px;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 500;
+            color: var(--gray-600);
+            cursor: pointer;
+            transition: all 0.15s;
+            min-width: 34px;
+            text-align: center;
+        }
+
+        .page-btn:hover:not(:disabled) { border-color: var(--blue); color: var(--blue); background: var(--blue-light); }
+        .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .page-btn.active { background: var(--blue); color: white; border-color: var(--blue); }
+
+        .page-size-select {
+            padding: 6px 10px;
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius);
+            font-size: 13px;
+            font-family: 'DM Sans', sans-serif;
+            color: var(--gray-600);
+            background: white;
+            cursor: pointer;
+        }
+
+        .page-size-select:focus { outline: none; border-color: var(--blue); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <div>
+                <div class="header-title-row">
+                    <h1>TenVul</h1>
+                    <span class="header-badge">CVE Lookup</span>
+                </div>
+                <p style="color: #4ade80;">Built for Tenable Security Center</p>
+            </div>
+        </div>
+
+        <div class="body">
+            <!-- Search Card -->
+            <div class="search-card">
+                <div class="search-label">CVE Lookup</div>
+                <div class="input-row">
+                    <input type="text" id="cveInput" placeholder="CVE-2025-54918" autocomplete="off" spellcheck="false">
+                    <button id="queryBtn">Search</button>
+                </div>
+                <p class="hint">
+                    Single: <code>CVE-2025-54918</code> &nbsp;|&nbsp;
+                    Multiple (comma-separated): <code>CVE-2025-12429, CVE-2025-12432</code>
+                </p>
+            </div>
+
+            <!-- Status -->
+            <div id="status"></div>
+
+            <!-- Results -->
+            <div id="resultContainer">
+                <div class="result-header">
+                    <div class="result-title">Results <span id="resultCount" class="badge"></span></div>
+                    <div class="result-actions">
+                        <select class="page-size-select" id="pageSizeSelect" onchange="changePageSize()">
+                            <option value="25">25 / page</option>
+                            <option value="50">50 / page</option>
+                            <option value="100">100 / page</option>
+                        </select>
+                        <button class="export-btn" id="copyBtn" onclick="copyTableData()">📋 Copy</button>
+                        <button class="export-btn" id="csvBtn" onclick="exportToCSV()">⬇️ Export CSV</button>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table id="resultsTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>IP Address</th>
+                                <th>DNS Name</th>
+                                <th>NetBIOS Name</th>
+                                <th>Repository ID</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+                <!-- Pagination -->
+                <div class="pagination-bar">
+                    <div class="pagination-info" id="paginationInfo"></div>
+                    <div class="pagination-controls" id="paginationControls"></div>
+                </div>
+            </div>
+
+            <!-- No Result -->
+            <div id="noResult">
+                <strong>⚠️ No affected hosts found</strong>
+                No hosts were found for the queried CVE(s). The CVE may not exist in your environment.
+            </div>
+        </div>
+    </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            Built by <a href="https://github.com/tint-us" target="_blank">tint-us</a> · <a href="https://github.com/tint-us" target="_blank">github.com/tint-us</a>
+        </div>
+
+    <script>
+        const cveInput       = document.getElementById('cveInput');
+        const queryBtn       = document.getElementById('queryBtn');
+        const statusDiv      = document.getElementById('status');
+        const tableBody      = document.getElementById('tableBody');
+        const resultContainer = document.getElementById('resultContainer');
+        const noResultDiv    = document.getElementById('noResult');
+        const resultCount    = document.getElementById('resultCount');
+
+        let currentHosts = [];
+        let currentPage = 1;
+        let pageSize = 25;
+
+        // --- Helpers ---
+
+        function showStatus(message, type) {
+            statusDiv.textContent = message;
+            statusDiv.className = `status-${type}`;
+            statusDiv.style.display = 'block';
+            noResultDiv.style.display = 'none';
+        }
+
+        function hideStatus() {
+            statusDiv.style.display = 'none';
+        }
+
+        // [SECURITY FIX] Sanitize strings before inserting into DOM
+        // Prevents XSS from malicious data in Tenable API responses
+        function escapeHtml(str) {
+            if (str == null) return 'N/A';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // Normalize CVE input: trim spaces around commas, uppercase, remove empty entries
+        // e.g. "CVE-2025-1234 , CVE-2025-5678 " becomes "CVE-2025-1234,CVE-2025-5678"
+        function normalizeCveInput(input) {
+            return input
+                .split(',')
+                .map(cve => cve.trim().toUpperCase())
+                .filter(cve => cve.length > 0)
+                .join(',');
+        }
+
+        // Client-side CVE format validation (mirrors server-side)
+        function isValidCveInput(input) {
+            if (!input) return false;
+            const cveList = input.split(',');
+            const pattern = /^CVE-\d{4}-\d{4,}$/i;
+            return cveList.every(cve => pattern.test(cve.trim()));
+        }
+
+        // --- Pagination ---
+        function changePageSize() {
+            pageSize = parseInt(document.getElementById('pageSizeSelect').value);
+            currentPage = 1;
+            renderTable(currentHosts);
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            renderTable(currentHosts);
+            document.getElementById('resultContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function renderPagination(totalItems) {
+            const totalPages = Math.ceil(totalItems / pageSize);
+            const info = document.getElementById('paginationInfo');
+            const controls = document.getElementById('paginationControls');
+
+            const start = (currentPage - 1) * pageSize + 1;
+            const end = Math.min(currentPage * pageSize, totalItems);
+            info.textContent = `Showing ${start}–${end} of ${totalItems} hosts`;
+
+            if (totalPages <= 1) {
+                controls.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+
+            // Prev button
+            html += `<button class="page-btn" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>‹</button>`;
+
+            // Page number buttons — show max 5 pages around current
+            const delta = 2;
+            const range = [];
+            for (let i = Math.max(1, currentPage - delta); i <= Math.min(totalPages, currentPage + delta); i++) {
+                range.push(i);
+            }
+
+            if (range[0] > 1) {
+                html += `<button class="page-btn" onclick="goToPage(1)">1</button>`;
+                if (range[0] > 2) html += `<button class="page-btn" disabled>…</button>`;
+            }
+
+            range.forEach(p => {
+                html += `<button class="page-btn ${p === currentPage ? 'active' : ''}" onclick="goToPage(${p})">${p}</button>`;
+            });
+
+            if (range[range.length - 1] < totalPages) {
+                if (range[range.length - 1] < totalPages - 1) html += `<button class="page-btn" disabled>…</button>`;
+                html += `<button class="page-btn" onclick="goToPage(${totalPages})">${totalPages}</button>`;
+            }
+
+            // Next button
+            html += `<button class="page-btn" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>›</button>`;
+
+            controls.innerHTML = html;
+        }
+
+        // --- Render Table ---
+        function renderTable(hosts) {
+            const totalItems = hosts.length;
+            const start = (currentPage - 1) * pageSize;
+            const end = start + pageSize;
+            const pageHosts = hosts.slice(start, end);
+
+            let rows = '';
+            pageHosts.forEach((host, index) => {
+                const globalIndex = start + index + 1;
+                rows += `
+                    <tr>
+                        <td>${globalIndex}</td>
+                        <td>${escapeHtml(host.ip)}</td>
+                        <td>${escapeHtml(host.dnsName)}</td>
+                        <td>${escapeHtml(host.netbiosName)}</td>
+                        <td>${escapeHtml(host.repositoryID)}</td>
+                    </tr>
+                `;
+            });
+            tableBody.innerHTML = rows;
+            resultCount.textContent = `${totalItems} host${totalItems !== 1 ? 's' : ''}`;
+            resultContainer.style.display = 'block';
+            renderPagination(totalItems);
+        }
+
+        // --- Main Query ---
+        async function runQuery() {
+            const cveID = normalizeCveInput(cveInput.value);
+
+            // Update the input field to show the normalized value
+            cveInput.value = cveID;
+
+            if (!cveID) {
+                showStatus('Please enter a CVE ID.', 'error');
+                return;
+            }
+
+            // [SECURITY FIX] Client-side format check before hitting the server
+            if (!isValidCveInput(cveID)) {
+                showStatus('Invalid CVE format. Use CVE-YYYY-NNNNN (e.g. CVE-2025-12345).', 'error');
+                return;
+            }
+
+            // Reset pagination on new query
+            currentPage = 1;
+
+            // [PERFORMANCE FIX] Disable button during request to prevent spam
+            queryBtn.disabled = true;
+            queryBtn.textContent = 'Searching...';
+            showStatus(`Querying Tenable SC for: ${cveID}`, 'loading');
+            resultContainer.style.display = 'none';
+            tableBody.innerHTML = '';
+            currentHosts = [];
+
+            try {
+                const response = await fetch('/api/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cveID })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error_msg || `Query failed (error code: ${data.error_code || 'unknown'})`);
+                }
+
+                currentHosts = data.hosts || [];
+
+                if (currentHosts.length === 0) {
+                    noResultDiv.style.display = 'block';
+                    hideStatus();
+                } else {
+                    renderTable(currentHosts);
+                    showStatus(`Found ${currentHosts.length} affected host(s) for ${cveID}.`, 'success');
+                }
+
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+                console.error('Query error:', error);
+            } finally {
+                // Always re-enable the button
+                queryBtn.disabled = false;
+                queryBtn.textContent = 'Search';
+            }
+        }
+
+        // --- Export CSV ---
+        function exportToCSV() {
+            if (currentHosts.length === 0) { showStatus('No data to export.', 'error'); return; }
+
+            const headers = ['#', 'IP Address', 'DNS Name', 'NetBIOS Name', 'Repository ID'];
+            let csv = headers.join(',') + '\n';
+
+            currentHosts.forEach((host, i) => {
+                const row = [
+                    i + 1,
+                    host.ip || 'N/A',
+                    host.dnsName || 'N/A',
+                    host.netbiosName || 'N/A',
+                    host.repositoryID || 'N/A'
+                ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
+                csv += row + '\n';
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url  = URL.createObjectURL(blob);
+            const a    = document.createElement('a');
+            const filename = `Tenable_CVE_${cveInput.value.trim().replace(/[^a-zA-Z0-9-]/g, '_')}.csv`;
+
+            a.href = url;
+            a.download = filename;
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url); // Clean up object URL
+
+            showStatus(`Exported ${currentHosts.length} rows to ${filename}.`, 'success');
+        }
+
+        // --- Copy to Clipboard ---
+        // [FIX] Replaced deprecated document.execCommand with modern navigator.clipboard API
+        async function copyTableData() {
+            if (currentHosts.length === 0) { showStatus('No data to copy.', 'error'); return; }
+
+            const headers = ['IP Address', 'DNS Name', 'NetBIOS Name', 'Repository ID'];
+            const rows = currentHosts.map(h =>
+                [h.ip, h.dnsName, h.netbiosName, h.repositoryID]
+                    .map(v => v || 'N/A').join('\t')
+            );
+            const text = [headers.join('\t'), ...rows].join('\n');
+
+            try {
+                await navigator.clipboard.writeText(text);
+                showStatus('Table data copied to clipboard!', 'success');
+            } catch {
+                showStatus('Copy failed. Please select and copy the table manually.', 'error');
+            }
+        }
+
+        // --- Event Listeners ---
+        queryBtn.addEventListener('click', runQuery);
+        cveInput.addEventListener('keydown', e => { if (e.key === 'Enter') runQuery(); });
+    </script>
+</body>
+</html>
