@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Environment variables — JANGAN di-commit, berisi credentials!
+.env
+
+# Backup files
+*.20251114
+*.20251114-02
+public/index.html.20251114
+public/index.html.20251114-02
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db

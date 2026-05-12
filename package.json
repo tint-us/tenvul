@@ -1,0 +1,26 @@
+{
+  "name": "teenvul",
+  "version": "1.0.0",
+  "description": "A web-based tool to query affected hosts for CVEs using the Tenable Security Center API.",
+  "main": "server.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "NODE_ENV=development node server.js"
+  },
+  "keywords": [
+    "tenable",
+    "security-center",
+    "cve",
+    "vulnerability",
+    "cybersecurity"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.7.9",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  }
+}
