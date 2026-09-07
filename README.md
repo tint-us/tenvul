@@ -1,6 +1,6 @@
-# Tenable SC: CVE Host Lookup Tool
+# TenVul · CVE Host Lookup
 
-A simple web-based tool to look up which hosts in your network are affected by a specific CVE, using the **Tenable Security Center** API.
+A lightweight web app to look up which hosts in your network are affected by a specific CVE, using the **Tenable Security Center** API.
 
 ![Node.js](https://img.shields.io/badge/Node.js-18%2B-green) ![Express](https://img.shields.io/badge/Express-4.x-lightgrey) ![License](https://img.shields.io/badge/license-MIT-blue)
 
@@ -8,34 +8,44 @@ A simple web-based tool to look up which hosts in your network are affected by a
 
 ## 🔍 What It Does
 
-Enter one or more CVE IDs (e.g. `CVE-2025-54918`) and the tool will query your Tenable Security Center to return a list of all **affected hosts** — including their IP address, DNS name, NetBIOS name, and Repository ID.
+Enter one or more CVE IDs (e.g. `CVE-2025-54918`) and the tool queries your Tenable Security Center to return a list of all **affected hosts** — including IP address, DNS name, NetBIOS name, and Repository ID.
 
 Results can be **copied to clipboard** or **exported to CSV**.
 
 ---
+
 <img width="1110" height="327" alt="image" src="https://github.com/user-attachments/assets/83e57c64-e5fe-47cf-a7d5-9532b66c7e02" />
+
+---
+
+## ⚠️ Security Warning
+
+> **This tool exposes vulnerable host data from your environment.**
+> Restrict access to the server you deploy it on.
+> Use VPN-only access, firewall rules, or a network allowlist.
+> **Never expose TenVul to the public internet.**
 
 ---
 
 ## 📋 Features
 
 - 🔎 Single or multiple CVE lookup (comma-separated)
-- 📊 Results displayed in a clean, sortable table
+- 📊 Results displayed in a clean, paginated table
 - 📋 Copy table data to clipboard
 - ⬇️ Export results to CSV
-- 🔒 Secure API key authentication via HTTP headers
+- 🔒 API credentials stored server-side — never exposed to the frontend
 - 🖥️ Responsive UI (mobile-friendly)
 
 ---
 
 ## 🧰 Tech Stack
 
-| Layer    | Technology         |
-|----------|--------------------|
-| Backend  | Node.js + Express  |
-| Frontend | Vanilla JS + HTML/CSS |
-| HTTP Client | Axios          |
-| Config   | dotenv             |
+| Layer       | Technology            |
+|-------------|-----------------------|
+| Backend     | Node.js + Express     |
+| Frontend    | Vanilla JS + HTML/CSS |
+| HTTP Client | Axios                 |
+| Config      | dotenv                |
 
 ---
 
@@ -83,13 +93,27 @@ PORT=3000
 
 > ⚠️ **Never commit your `.env` file to Git.** It contains sensitive credentials.
 
-### 4. Run the application
+### 4. Install PM2 and start the application
+
+TenVul runs as a persistent background process. [PM2](https://pm2.keymetrics.io/) keeps it alive and auto-restarts it on server reboot.
 
 ```bash
-npm start
+npm install -g pm2
+pm2 start server.js --name tenvul
+pm2 save
+pm2 startup
 ```
 
-The app will be available at: `http://localhost:3000`
+The app will be available at `http://localhost:3000`.
+
+**Useful PM2 commands:**
+
+```bash
+pm2 status          # Check running processes
+pm2 logs tenvul     # View live logs
+pm2 restart tenvul  # Restart the app
+pm2 stop tenvul     # Stop the app
+```
 
 ---
 
@@ -98,17 +122,17 @@ The app will be available at: `http://localhost:3000`
 1. Open the app in your browser at `http://localhost:3000`
 2. Enter a CVE ID in the input field
    - **Single CVE:** `CVE-2025-54918`
-   - **Multiple CVEs:** `CVE-2025-12429,CVE-2025-12432,CVE-2025-12433`
-3. Click **"Query Host Terdampak"** or press **Enter**
+   - **Multiple CVEs:** `CVE-2025-12429, CVE-2025-12432, CVE-2025-12433`
+3. Click **Search** or press **Enter**
 4. View results in the table
-5. Use **📋 Copy Data** or **⬇️ Export CSV** to save the results
+5. Use **📋 Copy** or **⬇️ Export CSV** to save the results
 
 ---
 
 ## 📁 Project Structure
 
 ```
-teenvul/
+tenvul/
 ├── server.js          # Express backend — handles API proxy to Tenable SC
 ├── package.json       # Project metadata and dependencies
 ├── .env               # Environment variables (NOT committed to Git)
@@ -161,8 +185,9 @@ Queries Tenable SC for hosts affected by the given CVE(s).
 
 ## 🔐 Security Notes
 
-- This tool uses `NODE_TLS_REJECT_UNAUTHORIZED=0` at startup to allow self-signed certificates — common in internal/lab Tenable SC deployments. **Do not use this in production environments exposed to the public internet.**
-- API credentials are stored in `.env` and sent via `x-apikey` header — never exposed to the frontend.
+- **TLS verification** is disabled at startup (`NODE_TLS_REJECT_UNAUTHORIZED=0`) to support self-signed certificates common in internal Tenable SC deployments. If your Tenable SC uses a valid trusted certificate, remove this flag from `server.js`.
+- **API credentials** are stored in `.env` and forwarded via `x-apikey` header — never exposed to the browser or frontend.
+- **Restrict access** to the server running TenVul. This tool returns sensitive vulnerability data about your environment and should never be exposed publicly.
 
 ---
 
@@ -175,11 +200,12 @@ Queries Tenable SC for hosts affected by the given CVE(s).
 | Empty results | The CVE may not have affected hosts in your environment, or the CVE ID format is wrong |
 | Self-signed cert errors | The app already disables TLS verification by default — check your Tenable SC host URL |
 
+
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Feel free to open an issue or submit a pull request on GitHub.
+Contributions are welcome! Feel free to open an issue or submit a pull request.
 
 **Repository:** [github.com/tint-us/tenvul](https://github.com/tint-us/tenvul)
 
@@ -189,8 +215,10 @@ Contributions are welcome! Feel free to open an issue or submit a pull request o
 
 **tint-us** · [tintus.ardi@gmail.com](mailto:tintus.ardi@gmail.com) · [github.com/tint-us](https://github.com/tint-us)
 
+Found a bug or have feedback? DM or email — always appreciated! 🙏
+
 ---
 
 ## 📄 License
 
-MIT License — feel free to use, modify, and distribute.
+MIT License — free to use, modify, and distribute.
